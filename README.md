@@ -189,7 +189,7 @@ public class GodotBluetooth extends GodotPlugin {
             stopScan();
         }
 
-        emitSignal("bluetooth_log", "Escanear iniciando (Modo: Broadcast)...");
+        emitSignal("bluetooth_log", "Escanear iniciado (Modo: Broadcast)...");
 
         ScanSettings settings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -208,7 +208,7 @@ public class GodotBluetooth extends GodotPlugin {
         }
     }
 
-    // 🟢 AQUÍ ESTÁ EL CAMBIO REEMPLAZADO Y OPTIMIZADO
+    // 🟢 ESTA ES LA NUEVA FUNCIÓN TOTALMENTE ABIERTA Y REEMPLAZADA
     private final ScanCallback leScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
@@ -218,7 +218,7 @@ public class GodotBluetooth extends GodotPlugin {
             @SuppressLint("MissingPermission")
             String address = result.getDevice().getAddress();
 
-            // Si el dispositivo no trae registro de bytes, enviamos una cadena vacía en vez de romper el flujo
+            // Si el dispositivo no trae datos extras (longitud cero), mandamos cadena vacía en vez de ignorarlo
             String hexData = "";
             if (result.getScanRecord() != null && result.getScanRecord().getBytes() != null) {
                 hexData = bytesToHex(result.getScanRecord().getBytes());
@@ -226,15 +226,15 @@ public class GodotBluetooth extends GodotPlugin {
 
             int rssi = result.getRssi();
 
-            // Enviamos SIEMPRE el dispositivo detectado a Godot sin importar sus condiciones internas
+            // Enviamos SIEMPRE los datos limpios a Godot para que pinte el sensor
             String msg = "SCAN_DATA|" + address + "|" + hexData + "|" + rssi;
             emitSignal("bluetooth_log", msg);
         }
 
         @Override
         public void onScanFailed(int errorCode) {
-            // Si Android bloquea el escaneo por algún motivo interno, nos enteraremos aquí
-            emitSignal("bluetooth_log", "ERROR_CAMPANA|" + errorCode);
+            // Si hay un error de hardware en Android, nos enteraremos en la pantalla
+            emitSignal("bluetooth_log", "ERROR_JAVA_SCAN|" + errorCode);
         }
     };
 
@@ -247,6 +247,7 @@ public class GodotBluetooth extends GodotPlugin {
         return sb.toString();
     }
 }
+
 ```
 
 ---
