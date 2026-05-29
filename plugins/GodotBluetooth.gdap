@@ -1,0 +1,8 @@
+ [config]
+name="GodotBluetooth"
+binary_type="local"
+binary="GodotBluetooth-release.aar"
+
+[dependencies]
+local=[]
+remote=[]
