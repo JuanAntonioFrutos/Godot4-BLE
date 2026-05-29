@@ -171,16 +171,13 @@ public class GodotBluetooth extends GodotPlugin {
 
     private boolean initBluetooth() {
         BluetoothManager bluetoothManager = (BluetoothManager) getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
-
         if (bluetoothManager != null) {
             bluetoothAdapter = bluetoothManager.getAdapter();
-
             if (bluetoothAdapter != null) {
                 bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
                 return true;
             }
         }
-
         emitSignal("bluetooth_log", "Error: No se pudo inicializar Bluetooth");
         return false;
     }
@@ -188,7 +185,6 @@ public class GodotBluetooth extends GodotPlugin {
     @SuppressLint("MissingPermission")
     public void scan() {
         if (!initBluetooth()) return;
-
         if (scanning) {
             stopScan();
         }
@@ -212,50 +208,42 @@ public class GodotBluetooth extends GodotPlugin {
         }
     }
 
+    // 🟢 AQUÍ ESTÁ EL CAMBIO REEMPLAZADO Y OPTIMIZADO
     private final ScanCallback leScanCallback = new ScanCallback() {
-
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-
             if (result.getDevice() == null) return;
 
             @SuppressLint("MissingPermission")
             String address = result.getDevice().getAddress();
 
-            byte[] scanRecord = null;
-
-            if (result.getScanRecord() != null) {
-                scanRecord = result.getScanRecord().getBytes();
+            // Si el dispositivo no trae registro de bytes, enviamos una cadena vacía en vez de romper el flujo
+            String hexData = "";
+            if (result.getScanRecord() != null && result.getScanRecord().getBytes() != null) {
+                hexData = bytesToHex(result.getScanRecord().getBytes());
             }
 
-            if (scanRecord != null && scanRecord.length > 0) {
+            int rssi = result.getRssi();
 
-                String hexData = bytesToHex(scanRecord);
-                int rssi = result.getRssi();
-
-                String msg = "SCAN_DATA|" + address + "|" + hexData + "|" + rssi;
-
-                emitSignal("bluetooth_log", msg);
-            }
+            // Enviamos SIEMPRE el dispositivo detectado a Godot sin importar sus condiciones internas
+            String msg = "SCAN_DATA|" + address + "|" + hexData + "|" + rssi;
+            emitSignal("bluetooth_log", msg);
         }
 
         @Override
         public void onScanFailed(int errorCode) {
-            emitSignal("bluetooth_log", "Error escaneo: " + errorCode);
+            // Si Android bloquea el escaneo por algún motivo interno, nos enteraremos aquí
+            emitSignal("bluetooth_log", "ERROR_CAMPANA|" + errorCode);
         }
     };
 
     private String bytesToHex(byte[] bytes) {
-
         if (bytes == null) return "";
-
         StringBuilder sb = new StringBuilder();
-
         for (byte b : bytes) {
             sb.append(String.format("%02X", b));
         }
-
         return sb.toString();
     }
 }
